@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github._12012015.Cardboard</id>
+  
+  <name>Cardboard</name>
+  <summary>Browse Danbooru and save favorites</summary>
+  
+  <developer id="io.github._12012015">
+    <name>12012015</name>
+  </developer>
+  
+  <branding>
+    <color type="primary" scheme_preference="light">#B48F6B</color>
+    <color type="primary" scheme_preference="dark">#66482B</color>
+  </branding>
+  
+  <content_rating type="oars-1.1" />
+  
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </recommends>
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+
+  <launchable type="desktop-id">io.github._12012015.Cardboard.desktop</launchable>
+  
+  <url type="homepage">https://github.com/12012015/Cardboard/</url>
+  <url type="vcs-browser">https://github.com/12012015/Cardboard/</url>
+  <url type="bugtracker">https://github.com/12012015/Cardboard/issues</url>
+  
+  <releases>
+    <release version="1.0.0" date="2025-23-05">
+      <description translate="no">
+        <ul>
+          <li>Started</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+  
+</component>

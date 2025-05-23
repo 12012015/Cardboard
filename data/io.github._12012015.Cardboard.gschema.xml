@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="cardboard">
+ <schema id="io.github._12012015.Cardboard" path="/io/github/_12012015/Cardboard/">
+    <key name="default-width" type="i">
+      <default>1000</default>
+    </key>
+    <key name="default-height" type="i">
+      <default>700</default>
+    </key>
+    <key name="maximized" type="b">
+      <default>false</default>
+    </key>
+    <key name="stack" type="s">
+      <default>"Browse"</default>
+    </key>
+    <key name="safe-mode" type="b">
+      <default>true</default>
+    </key>
+    <key name="restore-tabs" type="b">
+      <default>true</default>
+    </key>
+    <key name="deleted-posts" type="b">
+      <default>false</default>
+    </key>
+    <key name="pending-posts" type="b">
+      <default>false</default>
+    </key>
+    <key name="blacklist" type="as">
+      <default>[]</default>
+    </key>
+    <key name="posts-per-page" type="i">
+      <default>60</default>
+    </key>
+    <key name="thumbnail-size" type="i">
+      <default>2</default>
+    </key>
+    <key name="save-files" type="b">
+      <default>false</default>
+    </key>
+    <key name="autocomplete" type="b">
+      <default>true</default>
+    </key>
+    <key name="custom-favorites" type="b">
+      <default>false</default>
+    </key>
+    <key name="new-tab-option" type="s">
+      <default>"blank"</default>
+    </key>
+    <key name="new-tab-query" type="s">
+      <default>""</default>
+    </key>
+    <key name="saved-searches" type="as">
+      <default>[]</default>
+    </key>
+    <key name="disabled-searches" type="as">
+      <default>[]</default>
+    </key>
+    <key name="sort" type="s">
+      <default>"last-added"</default>
+    </key>
+    <key name="favorites" type="s">
+      <default>""</default>
+    </key>
+    <key name="restore" type="s">
+      <default>""</default>
+    </key>
+ </schema>
+</schemalist>

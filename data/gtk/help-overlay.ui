@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.96.1 -->
+<interface>
+  <!-- interface-name help-overlay.ui -->
+  <requires lib="gtk" version="4.0"/>
+  <object class="GtkShortcutsWindow" id="help_overlay">
+    <child>
+      <object class="GtkShortcutsSection">
+        <property name="section-name">shortcuts</property>
+        <child>
+          <object class="GtkShortcutsGroup">
+            <property name="title">General</property>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="action-name">win.show-help-overlay</property>
+                <property name="title">Shortcuts</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="action-name">app.fullscreen</property>
+                <property name="title">Fullscreen</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="action-name">app.quit</property>
+                <property name="title">Quit</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkShortcutsGroup">
+            <property name="title">Tab</property>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="action-name">app.new-tab</property>
+                <property name="title">New Tab</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="action-name">app.close</property>
+                <property name="title">Close Tab</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="action-name">app.reopen-tab</property>
+                <property name="title">Reopen Closed Tab</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="action-name">app.overview</property>
+                <property name="title">Tabs Overview</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;primary&gt;Tab</property>
+                <property name="title">Next Tab</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;Shift&gt;&lt;primary&gt;Tab</property>
+                <property name="title">Previous Tab</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkShortcutsGroup">
+            <property name="title">Miscellaneous</property>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="action-name">app.add-favorite</property>
+                <property name="title">Add Favorite</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="action-name">app.open-in-browser</property>
+                <property name="title">Open in Browser</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;primary&gt;r F5</property>
+                <property name="title">Reload</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

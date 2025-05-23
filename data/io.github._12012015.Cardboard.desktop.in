@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Cardboard
+Comment=Browse Danbooru and save favorites
+Icon=io.github._12012015.Cardboard
+Exec=cardboard
+Terminal=false
+Categories=Graphics;AudioVideo;Network
+Keywords=GTK;GNOME;Danbooru

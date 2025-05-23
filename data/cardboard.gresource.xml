@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/io/github/_12012015/Cardboard">
+    <file alias="style.css">gtk/style.css</file>
+    <file>gtk/window.ui</file>
+    <file>gtk/preferences.ui</file>
+    <file>gtk/help-overlay.ui</file>
+    <file>gtk/post.ui</file>
+    <file>icons/scalable/actions/tag-symbolic.svg</file>
+    <file>icons/scalable/actions/tag-outline-symbolic.svg</file>
+    <file>icons/scalable/actions/heart-filled-symbolic.svg</file>
+    <file>icons/scalable/actions/heart-broken-symbolic.svg</file>
+  </gresource>
+</gresources>
+

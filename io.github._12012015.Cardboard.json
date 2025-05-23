@@ -1,0 +1,56 @@
+{
+    "id": "io.github._12012015.Cardboard",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "48",
+    "sdk": "org.gnome.Sdk",
+    "command": "cardboard",
+    "finish-args": [
+        "--share=network",
+        "--device=dri",
+        "--socket=pulseaudio",
+        "--socket=wayland"
+    ],
+    "modules": [
+        {
+            "name": "python-modules",
+            "buildsystem": "simple",
+            "build-commands": [
+                "mkdir ${FLATPAK_DEST}/lib/",
+                "mkdir ${FLATPAK_DEST}/lib/python3.12/",
+                "mkdir ${FLATPAK_DEST}/lib/python3.12/site-packages/",
+                "cp MasonryBox.py ${FLATPAK_DEST}/lib/python3.12/site-packages/MasonryBox.py",
+                "cp TagBox.py ${FLATPAK_DEST}/lib/python3.12/site-packages/TagBox.py",
+                "cp MediaWidget.py ${FLATPAK_DEST}/lib/python3.12/site-packages/MediaWidget.py"
+            ],
+            "sources": [
+                {
+                    "type": "file",
+                    "url": "https://gist.githubusercontent.com/12012015/b3bd1c0a72b46a14c5cc1471a316f0a1/raw/76333d5f1683a12008d9071332fda0f24f2fb58b/MasonryBox.py",
+                    "sha256": "f2c8493a36c03113018942dd7d7f151e16892d7629f3b8381ff4e15b67785144"
+                },
+                {
+                    "type": "file",
+                    "url": "https://gist.githubusercontent.com/12012015/04d9d10e0d3e1db35745471b6303624d/raw/4cb5a735c9a3af35e2e46b248f6690f1a2483096/TagBox.py",
+                    "sha256": "2363cff93d8685a47fac682e765868bc56b94b0e6b819f4b4128ea21f928561c"
+                },
+                {
+                    "type": "file",
+                    "url": "https://gist.githubusercontent.com/12012015/de34c51fcbb209a330c79e8ee326f32e/raw/2a9b83f74dc29b0e2005ba8339075026390c533b/MediaWidget.py",
+                    "sha256": "4627b58281b0b4070afe02f93a45979c825aee378de1ad69fad0379d92d8c946"
+                }
+            ]
+        },
+        {
+            "name": "cardboard",
+            "builddir": true,
+            "buildsystem": "meson",
+            "run-tests": true,
+            "sources": [
+                {
+                    "type": "dir",
+                    "path": "."
+                }
+            ]
+        }
+    ]
+}

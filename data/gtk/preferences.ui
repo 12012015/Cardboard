@@ -1,0 +1,218 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.96.1 -->
+<interface>
+  <!-- interface-name preferences.ui -->
+  <requires lib="gtk" version="4.18"/>
+  <requires lib="libadwaita" version="1.7"/>
+  <template class="Preferences" parent="AdwPreferencesDialog">
+    <property name="content-height">600</property>
+    <property name="content-width">600</property>
+    <property name="search-enabled">True</property>
+    <child>
+      <object class="AdwPreferencesPage">
+        <property name="icon-name">applications-system-symbolic</property>
+        <property name="title">General</property>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title">App</property>
+            <child>
+              <object class="AdwSwitchRow" id="Autocomplete">
+                <property name="name">autocomplete</property>
+                <property name="title">Autocomplete Search</property>
+                <property name="tooltip-text">Queries will be sent to Danbooru</property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwSwitchRow" id="RestoreTabs">
+                <property name="name">restore-tabs</property>
+                <property name="subtitle">Changes will apply at next startup</property>
+                <property name="title">Restore Tabs on Startup</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title">Favorites</property>
+            <child>
+              <object class="AdwSwitchRow" id="SaveFavorites">
+                <property name="name">save-files</property>
+                <property name="subtitle">Post media will be saved locally</property>
+                <property name="title">Save Favorites</property>
+                <property name="tooltip-text">Look at favorites after this toggle to download them</property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwSwitchRow" id="CustomFavorites">
+                <property name="name">custom-favorites</property>
+                <property name="title">Custom Favorites Folder</property>
+                <property name="tooltip-text">Default: app data</property>
+                <child type="prefix">
+                  <object class="GtkButton" id="Select">
+                    <property name="icon-name">folder-open-symbolic</property>
+                    <property name="tooltip-text">Select Folder</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title">New Tab</property>
+            <child>
+              <object class="AdwActionRow">
+                <property name="activatable-widget">Blank</property>
+                <property name="title">Blank Page</property>
+                <child type="prefix">
+                  <object class="GtkCheckButton" id="Blank">
+                    <property name="action-name">app.new-tab-option</property>
+                    <property name="action-target">'blank'</property>
+                    <property name="name">new-tab</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow">
+                <property name="activatable-widget">Random</property>
+                <property name="subtitle">Doesn't respect any filters</property>
+                <property name="title">Random Post</property>
+                <child type="prefix">
+                  <object class="GtkCheckButton" id="Random">
+                    <property name="action-name">app.new-tab-option</property>
+                    <property name="action-target">'random'</property>
+                    <property name="group">Blank</property>
+                    <property name="name">new-tab</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow">
+                <property name="activatable-widget">Custom</property>
+                <property name="title">Custom Query</property>
+                <child type="prefix">
+                  <object class="GtkCheckButton" id="Custom">
+                    <property name="action-name">app.new-tab-option</property>
+                    <property name="action-target">'custom'</property>
+                    <property name="group">Blank</property>
+                    <property name="name">new-tab</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+                <child type="suffix">
+                  <object class="GtkEntry" id="Query">
+                    <property name="hexpand">True</property>
+                    <property name="hexpand-set">True</property>
+                    <property name="name">new-tab-query</property>
+                    <property name="placeholder-text">Recently Uploaded.</property>
+                    <property name="sensitive">False</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesPage">
+        <property name="icon-name">view-grid-symbolic</property>
+        <property name="title">View</property>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title">Filter</property>
+            <child>
+              <object class="AdwSwitchRow" id="SafeMode">
+                <property name="name">safe-mode</property>
+                <property name="subtitle">Show only "General" posts</property>
+                <property name="title">Safe Mode</property>
+                <property name="tooltip-text">Depends on users tagging their posts correctly</property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwSwitchRow" id="DeletedPosts">
+                <property name="name">deleted-posts</property>
+                <property name="title">Deleted Posts</property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwSwitchRow" id="PendingPosts">
+                <property name="name">pending-posts</property>
+                <property name="title">Pending Posts</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title">Catalog</property>
+            <child>
+              <object class="AdwSpinRow" id="PostsperPage">
+                <property name="adjustment">
+                  <object class="GtkAdjustment">
+                    <property name="lower">20.0</property>
+                    <property name="page-increment">10.0</property>
+                    <property name="step-increment">1.0</property>
+                    <property name="upper">200.0</property>
+                  </object>
+                </property>
+                <property name="name">posts-per-page</property>
+                <property name="title">Posts per Page</property>
+                <property name="tooltip-text">Go easy on Danbooru</property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwComboRow" id="ThumbnailSize">
+                <property name="model">
+                  <object class="GtkStringList">
+                    <items>
+                      <item>180</item>
+                      <item>360</item>
+                      <item>720</item>
+                    </items>
+                  </object>
+                </property>
+                <property name="name">thumbnail-size</property>
+                <property name="title">Thumbnail Size</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesPage">
+        <property name="icon-name">tag-symbolic</property>
+        <property name="title">Tags</property>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title">Blacklist</property>
+            <child>
+              <object class="AdwPreferencesRow" id="Blacklist">
+                <property name="activatable">False</property>
+                <property name="title">Blacklist</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title">Saved Searches</property>
+            <child>
+              <object class="AdwPreferencesRow" id="SavedSearches">
+                <property name="activatable">False</property>
+                <property name="title">Blacklist</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

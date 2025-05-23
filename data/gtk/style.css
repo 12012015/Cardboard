@@ -1,0 +1,7 @@
+masonrybox row > * > * {box-shadow: none;}
+.suggestions {margin: 10px;}
+.suggestions list {box-shadow: none;}
+.duration {padding: 0px 12px 0px 12px; border-radius: 14px;}
+graphicsoffload * {background: var(--window-bg-color);}
+masonrybox row > * {background: transparent; background-color: transparent;}
+video > overlay > image {opacity: 0;}
