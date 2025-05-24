@@ -7,7 +7,7 @@ from MasonryBox import MasonryBox
 from MediaWidget import MediaWidget
 
 from .post import Post, activate
-from .danbooru import get_post, get_catalog, get_count
+from .danbooru import get_post, get_catalog, get_count, filter_query
 from .preferences import APP_ID, SETTINGS, tab_filter_func
 
 def new_page(tabview, query=None, skip=True):
