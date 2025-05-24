@@ -3,7 +3,6 @@ import json
 import time
 import random
 import threading
-import concurrent.futures
 
 import gi
 gi.require_version("Gtk", "4.0")
@@ -22,8 +21,7 @@ class Application(Adw.Application):
     def __init__(self):
         super().__init__(application_id=APP_ID)
         self.create_action("quit", lambda *_: self.quit(), ["<primary>q"])
-        self.create_action("about", lambda *_: self.dialog(Adw.AboutDialog(application_name=APP_NAME, application_icon=APP_ID, developer_name="12012015",
-                            issue_url=f"https://github.com/12012015/{APP_NAME}/issues", license_type=7, version="1.0.0")))
+        self.create_action("about", lambda *_: self.dialog(Adw.AboutDialog(application_name=APP_NAME, application_icon=APP_ID, developer_name="12012015", issue_url=f"https://github.com/12012015/{APP_NAME}/issues", license_type=7, version="1.0.0")))
         self.create_action("preferences", lambda *_: self.dialog(Preferences()))
         
     def do_activate(self):
@@ -75,10 +73,23 @@ class Window(Adw.ApplicationWindow):
         self.closed_tabs = []
         self.restore = SETTINGS.get_boolean("restore-tabs")
         super().__init__(application=app)
-        self.Stack.set_visible_child_name(SETTINGS.get_string("stack"))
         for attribute in ["default-width", "default-height", "maximized"]:
             SETTINGS.bind(attribute, self, attribute, 0)
-        create_actions(self)
+        action = self.get_application().create_action
+        action("fullscreen", self.fullscreen_action, ["F11"])
+        action("overview", lambda *_: self.TabOverview.set_open(not self.TabOverview.get_open()), ["<shift><primary>o"])
+        action("new-tab", self.new_tab, ["<primary>t"])
+        action("sort", lambda a, s, *_: (a.set_state(s), SETTINGS.set_string("sort", str(s).strip("'"))), stateful=GLib.Variant("s", SETTINGS.get_string("sort")))
+        action("new-tab-option", lambda a, s, *_: (a.set_state(s), SETTINGS.set_string("new-tab-option", str(s).strip("'"))), stateful=GLib.Variant("s", SETTINGS.get_string("new-tab-option")))
+        action("reload", self.reload, ["<primary>r", "F5"])
+        forward = action("forward", lambda a, d: tab_ops(self, a))
+        back = action("backward", lambda a, d: tab_ops(self, a))
+        action("close", lambda a, d: tab_ops(self, a), ["<primary>w"])
+        action("reopen-tab", lambda a, d: tab_ops(self, a), ["<primary><shift>t"])
+        action("open-in-browser", lambda a, d: tab_ops(self, a), ["<primary>o"])
+        action("add-favorite", self.add_favorite, ["<primary>d"])
+        back.set_enabled(False)
+        forward.set_enabled(False)
         SETTINGS.connect("changed::sort", lambda *_: self.FavOverlay.get_child().invalidate_sort() if hasattr(self.FavOverlay.get_child(), "invalidate_sort") else None)
         app.connect("shutdown", self.get_pages)
         if SETTINGS.get_boolean("restore-tabs"):
@@ -94,6 +105,8 @@ class Window(Adw.ApplicationWindow):
             for query in tabs:
                 page = new_page(self.TabView, query, skip=True)
             self.TabView.set_selected_page(page)
+        self.Stack.set_visible_child_name(SETTINGS.get_string("stack"))
+        self.update_stack(skip=True)
 
     def get_pages(self, *_):
         pages = self.TabView.get_pages()
@@ -140,11 +153,10 @@ class Window(Adw.ApplicationWindow):
     
     @Gtk.Template.Callback()
     def update_tab(self, *_):
-        current = self.Stack.get_page(self.Stack.get_visible_child()).get_title()
         text = None
         self.hide_popovers()
         page = self.TabView.get_selected_page()
-        if current == "Browse" and page:
+        if self.Stack.get_page(self.Stack.get_visible_child()).get_title() == "Browse" and page:
             back = self.get_application().lookup_action("backward")
             forward = self.get_application().lookup_action("forward")
             if hasattr(page, "index") and hasattr(page, "queries"):
@@ -181,9 +193,10 @@ class Window(Adw.ApplicationWindow):
         self.ToolbarView.set_reveal_top_bars(True)
     
     @Gtk.Template.Callback()
-    def update_stack(self, *_):
+    def update_stack(self, *_, skip=False):
         current = self.Stack.get_page(self.Stack.get_visible_child()).get_title()
-        SETTINGS.set_string("stack", current)
+        if not skip:
+            SETTINGS.set_string("stack", current)
         self.hide_popovers()
         text = ""
         if current == "Browse":
@@ -195,14 +208,14 @@ class Window(Adw.ApplicationWindow):
             self.Menu.set_menu_model(self.DefaultMenu)
             if hasattr(self.SearchOverlay, "text"):
                 text = self.SearchOverlay.text
-            if not self.SearchOverlay.get_child():
+            if not self.SearchOverlay.get_child() and not skip:
                 GLib.idle_add(self.reload)
         if current == "Favorites":
             self.Add.set_visible(True)
             self.Menu.set_menu_model(self.FavMenu)
             if hasattr(self.FavOverlay, "text"):
                 text = self.FavOverlay.text
-            if not self.FavOverlay.get_child():
+            if not self.FavOverlay.get_child() and not skip:
                 GLib.idle_add(self.reload)
         text = text if text != None else ""
         context = self.get_context()
@@ -238,26 +251,22 @@ class Window(Adw.ApplicationWindow):
         jsons, posts, thumbnails = get_favorites()
         posts = [i for i in os.listdir(jsons) if i.endswith(".json")]
         if posts == []:
-            self.FavOverlay.set_child(Adw.StatusPage(title="No Favorites"))
+            GLib.idle_add(self.FavOverlay.set_child, Adw.StatusPage(title="No Favorites"))
         else:
-            self.FavOverlay.set_child(Adw.Spinner())
+            GLib.idle_add(self.FavOverlay.set_child, Adw.Spinner())
             def do_load():
                 masonrybox = MasonryBox(child_activate=activate, max_columns=4, lazy_load=SETTINGS.get_int("posts-per-page"), pairs_only=False, load_in_view=lambda c: c.load_favorite())
-                masonrybox.set_filter_func(filter_func, self)
-                masonrybox.set_sort_func(sort_func)
                 start = time.time()
-                posts_jsons = []
-                for post in posts:
-                    with open(os.path.join(jsons, post), "r") as f:
-                        masonrybox.children.append(Post(json.load(f)))
+                masonrybox.children = [Post(json.load(open(os.path.join(jsons, post), "r"))) for post in posts]
+                print(len(masonrybox.children), "posts in", int(time.time() - start), "seconds")
                 GLib.idle_add(self.FavOverlay.set_child, masonrybox)
-                GLib.idle_add(masonrybox.invalidate_sort)
+                masonrybox.set_sort_func(sort_func)
+                masonrybox.set_filter_func(filter_func, self)
+                GLib.idle_add(masonrybox.order_children)
                 self.set_loading(False)
-                self.FavOverlay.task = None
-                print(len(masonrybox.children), "posts", time.time() - start, "seconds")
                 return False
-        if posts != [] and (not hasattr(self.FavOverlay, "task") or self.FavOverlay.task == None):
-            self.FavOverlay.task = threading.Thread(target=do_load, daemon=True).start()
+        if posts != []:
+            threading.Thread(target=do_load, daemon=True).start()
         else:
             GLib.idle_add(self.set_loading, False)
 
@@ -265,21 +274,19 @@ class Window(Adw.ApplicationWindow):
         self.set_loading(True)
         searches = [i for i in SETTINGS.get_strv("saved-searches") if not i in SETTINGS.get_strv("disabled-searches")]
         if searches == []:
-            self.SearchOverlay.set_child(Adw.StatusPage(title="No Searches"))
+            GLib.idle_add(self.SearchOverlay.set_child, Adw.StatusPage(title="No Searches"))
         else:
-            self.SearchOverlay.set_child(Adw.Spinner())
+            GLib.idle_add(self.SearchOverlay.set_child, Adw.Spinner())
         def do_load():
             masonrybox = MasonryBox(child_activate=activate, lazy_load=SETTINGS.get_int("posts-per-page"), max_columns=4, pairs_only=False, load_in_view=lambda c: c.Overlay.get_child().load())
-            masonrybox.set_filter_func(filter_func, self)
-            masonrybox.set_sort_func(searches_sort_func)
-            children = []
             for tag in searches:
                 data = get_catalog(tag)
                 for post in data:
-                    children.append(Post(post))
-            masonrybox.extend(children)
+                    masonrybox.children.append(Post(post))
             GLib.idle_add(self.SearchOverlay.set_child, masonrybox)
-            GLib.idle_add(masonrybox.invalidate_sort)
+            masonrybox.set_filter_func(filter_func, self)
+            masonrybox.set_sort_func(searches_sort_func)
+            GLib.idle_add(masonrybox.order_children)
             self.set_loading(False)
             return False
         if SETTINGS.get_strv("saved-searches") != []:
@@ -349,7 +356,15 @@ class Window(Adw.ApplicationWindow):
                     if data != []:
                         self.Suggestions.get_child().get_child().remove_all()
                         for tag in data:
-                            self.Suggestions.get_child().get_child().append(add_suggestion(tag))
+                            box = Gtk.Box(height_request=30, margin_start=6, margin_end=6, spacing=6)
+                            for index, text in enumerate([tag["name"], tag["post_count"]]):
+                                if index > 0:
+                                    text = f"({text})"
+                                label = Gtk.Label(label=text)
+                                if index > 0:
+                                    label.add_css_class("dimmed")
+                                box.append(label)
+                            self.Suggestions.get_child().get_child().append(box)
                         if not hasattr(self.Suggestions, "popover") or self.Suggestions.popover != popover:
                             self.Suggestions.popover = popover
                             previous_popover.set_child(None)
@@ -402,31 +417,3 @@ class Window(Adw.ApplicationWindow):
         dialog.connect("response", lambda d, r: do_add() if r == "add" else None)
         dialog.present(self)
         entry.grab_focus()
-    
-def create_actions(window):
-    action = window.get_application().create_action
-    action("fullscreen", window.fullscreen_action, ["F11"])
-    action("overview", lambda *_: window.TabOverview.set_open(not window.TabOverview.get_open()), ["<shift><primary>o"])
-    action("new-tab", window.new_tab, ["<primary>t"])
-    action("sort", lambda a, s, *_: (a.set_state(s), SETTINGS.set_string("sort", str(s).strip("'"))), stateful=GLib.Variant("s", SETTINGS.get_string("sort")))
-    action("new-tab-option", lambda a, s, *_: (a.set_state(s), SETTINGS.set_string("new-tab-option", str(s).strip("'"))), stateful=GLib.Variant("s", SETTINGS.get_string("new-tab-option")))
-    action("reload", window.reload, ["<primary>r", "F5"])
-    forward = action("forward", lambda a, d: tab_ops(window, a))
-    back = action("backward", lambda a, d: tab_ops(window, a))
-    action("close", lambda a, d: tab_ops(window, a), ["<primary>w"])
-    action("reopen-tab", lambda a, d: tab_ops(window, a), ["<primary><shift>t"])
-    action("open-in-browser", lambda a, d: tab_ops(window, a), ["<primary>o"])
-    action("add-favorite", window.add_favorite, ["<primary>d"])
-    back.set_enabled(False)
-    forward.set_enabled(False)
-
-def add_suggestion(tag):
-    box = Gtk.Box(height_request=30, margin_start=6, margin_end=6, spacing=6)
-    for index, text in enumerate([tag["name"], tag["post_count"]]):
-        if index > 0:
-            text = f"({text})"
-        label = Gtk.Label(label=text)
-        if index > 0:
-            label.add_css_class("dimmed")
-        box.append(label)
-    return box
