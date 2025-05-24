@@ -98,7 +98,7 @@
                     </child>
                     <child>
                       <object class="GtkButton">
-                        <property name="action-name">app.backwards</property>
+                        <property name="action-name">app.backward</property>
                         <property name="icon-name">go-previous-symbolic</property>
                         <property name="tooltip-text" bind-source="Back" bind-property="tooltip-text" bind-flags="bidirectional">Back</property>
                         <property name="visible" bind-source="Back" bind-property="visible" bind-flags="bidirectional">True</property>
