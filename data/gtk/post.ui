@@ -54,6 +54,7 @@ osd</property>
                                 <property name="icon-name">preferences-system-parental-controls-symbolic</property>
                                 <property name="tooltip-text">View Children</property>
                                 <property name="visible" bind-source="Children" bind-property="visible" bind-flags="bidirectional">False</property>
+                                <signal name="clicked" handler="children_clicked"/>
                               </object>
                             </child>
                             <child>
@@ -63,6 +64,7 @@ circular</property>
                                 <property name="icon-name">avatar-default-symbolic</property>
                                 <property name="tooltip-text">View Parent</property>
                                 <property name="visible" bind-source="Parent" bind-property="visible" bind-flags="bidirectional">False</property>
+                                <signal name="clicked" handler="parent_clicked"/>
                               </object>
                             </child>
                           </object>
@@ -88,6 +90,7 @@ osd</property>
                                 <property name="icon-name">preferences-system-parental-controls-symbolic</property>
                                 <property name="tooltip-text">View Children</property>
                                 <property name="visible">False</property>
+                                <signal name="clicked" handler="children_clicked"/>
                               </object>
                             </child>
                             <child>
@@ -97,6 +100,7 @@ circular</property>
                                 <property name="icon-name">avatar-default-symbolic</property>
                                 <property name="tooltip-text">View Parent</property>
                                 <property name="visible">False</property>
+                                <signal name="clicked" handler="parent_clicked"/>
                               </object>
                             </child>
                           </object>
@@ -114,6 +118,7 @@ osd</property>
                                 <property name="hexpand">True</property>
                                 <property name="icon-name">help-about-symbolic</property>
                                 <property name="tooltip-text">Info</property>
+                                <signal name="clicked" handler="info_clicked"/>
                               </object>
                             </child>
                             <child>
@@ -122,6 +127,7 @@ osd</property>
 circular</property>
                                 <property name="icon-name">tag-symbolic</property>
                                 <property name="tooltip-text">Tags</property>
+                                <signal name="clicked" handler="tags_clicked"/>
                               </object>
                             </child>
                             <child>
@@ -130,6 +136,8 @@ circular</property>
 osd</property>
                                 <property name="icon-name">star-new-symbolic</property>
                                 <property name="tooltip-text">Add Favorite</property>
+                                <signal name="clicked" handler="favorite_clicked"/>
+                                <signal name="map" handler="favorite_button_mapped"/>
                               </object>
                             </child>
                             <child>
@@ -139,6 +147,7 @@ circular</property>
                                 <property name="icon-name">folder-download-symbolic</property>
                                 <property name="tooltip-text">Download</property>
                                 <property name="visible">False</property>
+                                <signal name="clicked" handler="download_clicked"/>
                               </object>
                             </child>
                           </object>
@@ -172,5 +181,17 @@ circular</property>
     </property>
     <property name="height-request">50</property>
     <property name="overflow">hidden</property>
+    <child>
+      <object class="GtkEventControllerMotion">
+        <signal name="enter" handler="toggle_revealer"/>
+        <signal name="leave" handler="toggle_revealer"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkGestureClick">
+        <property name="button">2</property>
+        <signal name="pressed" handler="middle_click"/>
+      </object>
+    </child>
   </template>
 </interface>
