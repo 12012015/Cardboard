@@ -32,16 +32,15 @@ def do_load_page(page):
         load_page(page)
 
 def load_page(page, query=False, history=True):
-    page.task = None
     content = page.get_child()
-    content.set_child(Adw.Spinner())
+    GLib.idle_add(content.set_child, Adw.Spinner())
     content.get_root().hide_popovers()
     if query == False:
         query = page.query
     else:
         page.query = query
     if query == None:
-        content.set_child(Adw.StatusPage(icon_name=APP_ID, title="Search Danbooru"))
+        GLib.idle_add(content.set_child, Adw.StatusPage(icon_name=APP_ID, title="Search Danbooru"))
         return GLib.idle_add(content.get_root().update_tab)
     if not hasattr(page, "index") or not hasattr(page, "queries"):
         page.queries = [page.query]
@@ -49,11 +48,10 @@ def load_page(page, query=False, history=True):
     elif history:
         page.queries.append(page.query)
         page.index = len(page.queries) - 1
-    content.get_root().set_loading(True)
-    page.set_loading(True)
+    GLib.idle_add(content.get_root().set_loading, True)
+    GLib.idle_add(page.set_loading, True)
     if isinstance(query, dict):
-        widget = Post(query, False)
-        check_widget_loaded(page, widget)
+        check_widget_loaded(page, Post(query, False))
     else:
         def do_load():
             if query.startswith("id:"):
@@ -66,27 +64,28 @@ def load_page(page, query=False, history=True):
                     widget = Adw.StatusPage(icon_name="dialog-question-symbolic", title="404", description="Not Found")
                 check_widget_loaded(page, widget)
             else:
-                children = []
                 data = get_catalog(query)
-                for i in data:
-                    children.append(Post(i))
-                if children != []:
-                    widget = MasonryBox(max_columns=4, child_activate=activate, pairs_only=False, load_in_view=lambda c: c.Overlay.get_child().load())
-                    widget.set_filter_func(tab_filter_func)
-                    widget.query = query
-                    GLib.idle_add(widget.extend, children)
-                    widget.get_child().connect("edge-reached", next_page)
+                if data != []:
                     n = get_count(query)
-                    if n == len(children):
-                        widget.end = True
-                    GLib.idle_add(page.set_title, f"{query} ({n})")
-                else:
-                    widget = Adw.StatusPage(icon_name="dialog-question-symbolic", title="404", description="Not Found")
-                root = content.get_root()
-                GLib.idle_add(content.set_child, widget)
-                GLib.idle_add(root.set_loading, False)
-                GLib.idle_add(page.set_loading, False)
-                GLib.idle_add(root.update_tab)
+                def do_show():
+                    if not content.get_root():
+                        return
+                    if data != []:
+                        widget = MasonryBox(max_columns=4, child_activate=activate, pairs_only=False, load_in_view=lambda c: c.Overlay.get_child().load())
+                        widget.set_filter_func(tab_filter_func)
+                        widget.query = query
+                        widget.extend(Post(i) for i in data)
+                        widget.get_child().connect("edge-reached", next_page)
+                        if n == len(widget.children):
+                            widget.end = True
+                        GLib.idle_add(page.set_title, f"{query} ({n})")
+                    else:
+                        widget = Adw.StatusPage(icon_name="dialog-question-symbolic", title="404", description="Not Found")
+                    GLib.idle_add(content.set_child, widget)
+                    GLib.idle_add(content.get_root().set_loading, False)
+                    GLib.idle_add(page.set_loading, False)
+                    GLib.idle_add(content.get_root().update_tab)
+                GLib.idle_add(do_show)
             return False
         threading.Thread(target=do_load, daemon=True).start()
 
@@ -133,7 +132,7 @@ def next_page(scrolledwindow, pos):
         masonrybox.get_root().set_loading(True)
         _page = masonrybox.get_root().TabView.get_selected_page()
         _page.set_loading(True)
-        def load():
+        def do_load():
             page = 2 if not hasattr(masonrybox, "page") else masonrybox.page + 1
             data = get_catalog(masonrybox.query, page)
             if data == None:
@@ -141,17 +140,17 @@ def next_page(scrolledwindow, pos):
             if data == []:
                 masonrybox.end = True
             else:
-                masonrybox.page = page
-                children = []
-                for i in data:
-                    children.append(Post(i))
-                GLib.idle_add(masonrybox.extend, children)
-            masonrybox.task = None
+                def do_add():
+                    masonrybox.page = page
+                    children = []
+                    for i in data:
+                        children.append(Post(i))
+                    masonrybox.extend(children)
+                GLib.idle_add(do_add)
             GLib.idle_add(masonrybox.get_root().set_loading, False)
             GLib.idle_add(_page.set_loading, False)
             return False
-        masonrybox.task = threading.Thread(target=load, daemon=True).start()
-    return False
+        threading.Thread(target=do_load, daemon=True).start()
 
 def tab_ops(window, action):
     if window.Stack.get_page(window.Stack.get_visible_child()).get_title() != "Browse":
