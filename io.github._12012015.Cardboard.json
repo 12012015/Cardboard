@@ -25,13 +25,13 @@
             "sources": [
                 {
                     "type": "file",
-                    "url": "https://gist.githubusercontent.com/12012015/b3bd1c0a72b46a14c5cc1471a316f0a1/raw/76333d5f1683a12008d9071332fda0f24f2fb58b/MasonryBox.py",
-                    "sha256": "f2c8493a36c03113018942dd7d7f151e16892d7629f3b8381ff4e15b67785144"
+                    "url": "https://gist.githubusercontent.com/12012015/b3bd1c0a72b46a14c5cc1471a316f0a1/raw/7a18352dccc47890ff851bd4126a342ba4309168/MasonryBox.py",
+                    "sha256": "33ffd3b3797a5e9efbb2acd8c123f61ddc44d59990c02b936a664e38f526495b"
                 },
                 {
                     "type": "file",
-                    "url": "https://gist.githubusercontent.com/12012015/04d9d10e0d3e1db35745471b6303624d/raw/4cb5a735c9a3af35e2e46b248f6690f1a2483096/TagBox.py",
-                    "sha256": "2363cff93d8685a47fac682e765868bc56b94b0e6b819f4b4128ea21f928561c"
+                    "url": "https://gist.githubusercontent.com/12012015/04d9d10e0d3e1db35745471b6303624d/raw/96de1a2845ce8802f26a4ac2da823b0ee421d9ff/TagBox.py",
+                    "sha256": "4b0d65719aab8a374e9b0eb4a3d51395fffb502714ea7c87df31ec997595bfed"
                 },
                 {
                     "type": "file",
