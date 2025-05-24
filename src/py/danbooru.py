@@ -39,6 +39,7 @@ def get_post(id):
         return None
 
 def filter_query(query):
+    query = "" if query == None else query
     if SETTINGS.get_boolean("safe-mode"):
         query += " rating:g"
     if not SETTINGS.get_boolean("pending-posts"):
