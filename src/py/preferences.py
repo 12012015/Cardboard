@@ -18,36 +18,46 @@ SETTINGS = Gio.Settings(schema_id=APP_ID)
 class Preferences(Adw.PreferencesDialog):
     __gtype_name__ = "Preferences"
     
-    RestoreTabs = Gtk.Template.Child()
-    Autocomplete = Gtk.Template.Child()
-    SaveFavorites = Gtk.Template.Child()
     CustomFavorites = Gtk.Template.Child()
-    Select = Gtk.Template.Child()
-    Blank = Gtk.Template.Child()
-    Random = Gtk.Template.Child()
     Custom = Gtk.Template.Child()
     Query = Gtk.Template.Child()
-    SafeMode = Gtk.Template.Child()
-    DeletedPosts = Gtk.Template.Child()
-    PendingPosts = Gtk.Template.Child()
-    PostsperPage = Gtk.Template.Child()
-    ThumbnailSize = Gtk.Template.Child()
+
     Blacklist = Gtk.Template.Child()
     SavedSearches = Gtk.Template.Child()
 
     def __init__(self):
         super().__init__()
-        self._Blacklist = TagBox(tags=SETTINGS.get_strv("blacklist"), editable=True)
-        self._Blacklist.set_name("blacklist")
-        self.Blacklist.set_child(self._Blacklist)
-        self._SavedSearches = saved_seaches_tag()
-        self.SavedSearches.set_child(self._SavedSearches)
-        self.Custom.connect("notify::active", lambda *_: self.Query.set_sensitive(self.Custom.get_active()))
-        for widget in ["RestoreTabs", "Autocomplete", "SaveFavorites", "CustomFavorites", "Query", "SafeMode", "DeletedPosts", "PendingPosts", "PostsperPage", "ThumbnailSize", "_Blacklist", "_SavedSearches"]:
-            bind_setting(getattr(self, widget))
-        self.Select.connect("clicked", select_folder)
-        self.Query.set_sensitive(self.Custom.get_active())
+        blacklist = TagBox(tags=SETTINGS.get_strv("blacklist"), editable=True)
+        blacklist.set_name("blacklist")
+        self.bind_setting(blacklist)
+        self.Blacklist.set_child(blacklist)
+        saved_searches = saved_seaches_tag()
+        self.bind_setting(saved_searches)
+        self.SavedSearches.set_child(saved_searches)
         self.CustomFavorites.set_subtitle(os.path.basename(SETTINGS.get_string("favorites")))
+
+    @Gtk.Template.Callback()
+    def bind_setting(self, widget):
+        widget_signal_map = {Adw.EntryRow: "text", Gtk.Entry: "text", Adw.SwitchRow: "active", Adw.ComboRow: "selected", Adw.SpinRow: "value", TagBox: "tags"}
+        signal = widget_signal_map.get(type(widget), None)
+        SETTINGS.bind(widget.get_name(), widget, signal, 0)
+
+    @Gtk.Template.Callback()
+    def custom_active(self, *_):
+        GLib.idle_add(self.Query.set_sensitive, self.Custom.get_active())
+
+    @Gtk.Template.Callback()
+    def select_folder(self, *_):
+        def set_favorites(dialog, result):
+            try:
+                folder = dialog.select_folder_finish(result)
+                if not hasattr(folder, "get_path"):
+                    return
+            except:
+                return
+            SETTINGS.set_string("favorites", folder.get_path())
+            self.CustomFavorites.set_subtitle(os.path.basename(folder.get_path()))
+        Gtk.FileDialog().select_folder(self.get_root(), callback=set_favorites)
 
 def saved_seaches_tag():
     tagbox = TagBox(editable=True)
@@ -81,23 +91,6 @@ def toggle_search(e, *_):
     else:
         value.remove(widget.get_label())
     SETTINGS.set_strv("disabled-searches", value)
-
-def bind_setting(Widget):
-    widget_signal_map = {Adw.EntryRow: "text", Gtk.Entry: "text", Adw.SwitchRow: "active", Adw.ComboRow: "selected", Adw.SpinRow: "value", TagBox: "tags"}
-    signal = widget_signal_map.get(type(Widget), None)
-    SETTINGS.bind(Widget.get_name(), Widget, signal, 0)
-
-def select_folder(button):
-    def set_favorites(dialog, result):
-        try:
-            folder = dialog.select_folder_finish(result)
-            if not hasattr(folder, "get_path"):
-                return
-        except:
-            return
-        SETTINGS.set_string("favorites", folder.get_path())
-        button.get_ancestor(Adw.ActionRow).set_subtitle(os.path.basename(folder.get_path()))
-    Gtk.FileDialog().select_folder(button.get_root(), callback=set_favorites)
 
 def natural_sort_key(s):
     return [int(text) if text.isdigit() else text for text in re.split(r"(\d+)", s)]
