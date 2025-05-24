@@ -29,49 +29,109 @@ class Post(Adw.Bin):
 
     def __init__(self, post, catalog=True):
         self.post = post
-        ECM = Gtk.EventControllerMotion()
-        ECM.connect("enter", lambda e, *_: e.get_widget().Revealer.set_reveal_child(True))
-        ECM.connect("leave", lambda e, *_: e.get_widget().Revealer.set_reveal_child(False))
         self.catalog = catalog
         if catalog:
             media = MediaWidget(uri=get_thumbnail(post), load=False, limit=1000)
-            GC = Gtk.GestureClick(button=2)
-            GC.connect("pressed", lambda e, *_: e.get_widget().get_root().new_tab(query=e.get_widget().post, skip=True))
             super().__init__()
-            self.add_controller(GC)
             if post["media_asset"]["duration"] != None:
                 m = post["media_asset"]["duration"] + 1
-                duration = f"{int(m // 60):02}:{round(m % 60):02}"
-                self.Duration.set_label(duration)
-                self.Duration.set_visible(True)
+                GLib.idle_add(self.Duration.set_label, f"{int(m // 60):02}:{round(m % 60):02}")
+                GLib.idle_add(self.Duration.set_visible, True)
         else:
             media = MediaWidget(uri=get_post_url(post))
             media.set_receives_default(True)
             super().__init__(margin_top=10, margin_start=10, margin_end=10, margin_bottom=10, halign=3)
-            self.Breakpoint.set_margin_bottom(30)
-            self.Overlay.set_valign(3)
-            self.Download.set_visible(True)
-        self.Overlay.set_child(media)
-        def finish_setup():
-            favorite_status(self.Favorite, post["id"])
-            self.Favorite.connect("clicked", lambda b: favorite(b, b.get_ancestor(Post).post))
-            self.add_controller(ECM)
-            if post["parent_id"] != None:
-                self.Parent.connect("clicked", lambda b: b.get_root().new_tab(query=f"id:{b.get_ancestor(Post).post['parent_id']}"))
-                self.Parent_2.connect("clicked", lambda b: b.get_root().new_tab(query=f"id:{b.get_ancestor(Post).post['parent_id']}"))
-                self.Parent.set_visible(True)
-            if post["has_children"] == True:
-                self.Children.connect("clicked", lambda b: b.get_root().new_tab(query=f"parent:{b.get_ancestor(Post).post['id']}"))
-                self.Children_2.connect("clicked", lambda b: b.get_root().new_tab(query=f"parent:{b.get_ancestor(Post).post['id']}"))
-                self.Children.set_visible(True)
-            self.Tags.connect("clicked", lambda b: show_tags(b, b.get_ancestor(Post).post))
-            self.Info.connect("clicked", lambda b: show_info(b, b.get_ancestor(Post).post))
-            self.Download.connect("clicked", lambda b: download(b, b.get_ancestor(Post).post))
-        GLib.idle_add(finish_setup)
+            GLib.idle_add(self.Breakpoint.set_margin_bottom, 30)
+            GLib.idle_add(self.Overlay.set_valign, 3)
+            GLib.idle_add(self.Download.set_visible, True)
+        GLib.idle_add(self.Overlay.set_child, media)
+        if post["parent_id"] != None:
+            GLib.idle_add(self.Parent.set_visible, True)
+        if post["has_children"] == True:
+            GLib.idle_add(self.Children.set_visible, True)
+
+    @Gtk.Template.Callback()
+    def parent_clicked(self, *_):
+        self.get_root().new_tab(query=f"id:{self.post['parent_id']}")
+
+    @Gtk.Template.Callback()
+    def children_clicked(self, *_):
+        self.get_root().new_tab(query=f"parent:{self.post['id']}")
+
+    @Gtk.Template.Callback()
+    def info_clicked(self, *_):
+        page = Adw.PreferencesPage()
+        post = self.post
+        rating_map = {"g": "General", "s": "Sensitive", "q": "Questionable", "e": "Explicit"}
+        rating = rating_map.get(post["rating"], "Unknown")
+        status = "Pending" if post["is_pending"] else "Deleted" if post["is_deleted"] else "Active"
+        info = {"ID": post["id"], "Date": GLib.DateTime.new_from_iso8601(post["created_at"]).format("%c"),
+            "Size": f"{round(post['file_size'] / (1024 * 1024), 2)} MB {post['file_ext']} ({post['image_width']}x{post['image_height']})", "Source": GLib.Uri.escape_string(post["source"], ":/?=", True),
+            "Rating": rating, "Status": status}
+        for title, _info in info.items():
+                group = Adw.PreferencesGroup(halign=1)
+                group.add(Adw.ActionRow(activatable=False, title=title, subtitle=_info, halign=1))
+                page.add(group)
+        dialog = Adw.Dialog(child=page, content_width=500, content_height=500, presentation_mode=2, css_classes=["osd"])
+        dialog.present(self.get_root())
+
+    @Gtk.Template.Callback()
+    def tags_clicked(self, *_):
+        post = self.post
+        page = Adw.PreferencesPage()
+        info = {"Artist": post["tag_string_artist"], "Character": post["tag_string_character"],
+            "Copyright": post["tag_string_copyright"], "General": post["tag_string_general"],
+            "Meta": post["tag_string_meta"]}
+        for title, _tags in info.items():
+            if _tags != "":
+                _tags = _tags.split()
+                group = Adw.PreferencesGroup(title=title, halign=1)
+                tagbox = TagBox()
+                for i in _tags:
+                    tag = tagbox.add_tag(i)
+                    tag.connect("clicked", lambda b: b.get_root().load_query(query=b.get_label()))
+                    m = Gtk.GestureClick(button=2)
+                    m.connect("pressed", lambda e, *_: e.get_widget().get_root().new_tab(query=e.get_widget().get_label(), skip=True))
+                    tag.add_controller(m)
+                group.add(Adw.PreferencesRow(activatable=False, child=tagbox))
+                page.add(group)
+        dialog = Adw.Dialog(child=page, content_width=500, content_height=500, presentation_mode=2, css_classes=["osd"])
+        dialog.present(self.get_root())
+
+    @Gtk.Template.Callback()
+    def favorite_button_mapped(self, *_):
+        GLib.idle_add(lambda: favorite_status(self.Favorite, self.post["id"]))
         
+    @Gtk.Template.Callback()
+    def favorite_clicked(self, *_):
+        favorite(self.Favorite, self.post)
+
+    @Gtk.Template.Callback()
+    def toggle_revealer(self, *_):
+        self.Revealer.set_reveal_child(not self.Revealer.get_reveal_child())
+
+    @Gtk.Template.Callback()
+    def middle_click(self, *_):
+        if self.catalog:
+            self.get_root().new_tab(query=self.post, skip=True)
+
+    @Gtk.Template.Callback()
+    def download_clicked(self, *_):
+        post = self.post
+        response = post_download(post["file_url"])
+        if response == None:
+            return
+        def result(dialog, result):
+            file = dialog.save_finish(result)
+            if file:
+                file.replace_contents_bytes_async(response, None, False, 0)
+        dialog = Gtk.FileDialog(initial_name=f"{post['id']}.{post['file_ext']}")
+        dialog.set_title("Save File")
+        dialog.save(self.get_root(), None, result)
+
     def load_favorite(self):
         if SETTINGS.get_boolean("save-files"):
-            def attempt_load():
+            def do_load():
                 post = get_post_url(self.post)
                 thumbnail = get_thumbnail(self.post)
                 jsons, posts, thumbnails = get_favorites()
@@ -99,7 +159,7 @@ class Post(Adw.Bin):
                     self.Overlay.get_child().set_property("uri", thumbnail_path)
                 else:
                     self.Overlay.get_child().set_property("uri", post_path)
-            self.task = threading.Thread(target=attempt_load, daemon=True).start()
+            threading.Thread(target=do_load, daemon=True).start()
         else:
             self.Overlay.get_child().load()
     
@@ -148,54 +208,6 @@ def center(dialog, *_):
     gizmo = dialog.get_child().get_parent().get_parent()
     if gizmo != None:
         gizmo.set_halign(3)
-
-def show_tags(button, post):
-    page = Adw.PreferencesPage()
-    info = {"Artist": post["tag_string_artist"], "Character": post["tag_string_character"],
-        "Copyright": post["tag_string_copyright"], "General": post["tag_string_general"], 
-        "Meta": post["tag_string_meta"]}
-    for title, _tags in info.items():
-        if _tags != "":
-            _tags = _tags.split()
-            group = Adw.PreferencesGroup(title=title, halign=1)
-            tagbox = TagBox()
-            for i in _tags:
-                tag = tagbox.add_tag(i)
-                tag.connect("clicked", lambda b: b.get_root().load_query(query=b.get_label()))
-                m = Gtk.GestureClick(button=2)
-                m.connect("pressed", lambda e, *_: e.get_widget().get_root().new_tab(query=e.get_widget().get_label(), skip=True))
-                tag.add_controller(m)
-            group.add(Adw.PreferencesRow(activatable=False, child=tagbox))
-            page.add(group)
-    dialog = Adw.Dialog(child=page, content_width=500, content_height=500, presentation_mode=2, css_classes=["osd"])
-    dialog.present(button.get_root())
-
-def show_info(button, post):
-    page = Adw.PreferencesPage()
-    rating_map = {"g": "General", "s": "Sensitive", "q": "Questionable", "e": "Explicit"}
-    rating = rating_map.get(post["rating"], "Unknown")
-    status = "Pending" if post["is_pending"] else "Deleted" if post["is_deleted"] else "Active"
-    info = {"ID": post["id"], "Date": GLib.DateTime.new_from_iso8601(post["created_at"]).format("%c"),
-        "Size": f"{round(post['file_size'] / (1024 * 1024), 2)} MB {post['file_ext']} ({post['image_width']}x{post['image_height']})", "Source": GLib.Uri.escape_string(post["source"], ":/?=", True), 
-        "Rating": rating, "Status": status}
-    for title, _info in info.items():
-            group = Adw.PreferencesGroup(halign=1)
-            group.add(Adw.ActionRow(activatable=False, title=title, subtitle=_info, halign=1))
-            page.add(group)
-    dialog = Adw.Dialog(child=page, content_width=500, content_height=500, presentation_mode=2, css_classes=["osd"])
-    dialog.present(button.get_root())
-
-def download(button, post):
-    response = post_download(post["file_url"])
-    if response == None:
-        return
-    def result(dialog, result):
-        file = dialog.save_finish(result)
-        if file:
-            file.replace_contents_bytes_async(response, None, False, 0)
-    dialog = Gtk.FileDialog(initial_name=f"{post['id']}.{post['file_ext']}")
-    dialog.set_title("Save File")
-    dialog.save(button.get_root(), None, result)
 
 def favorite_status(button, id):
     jsons, posts, thumbnails = get_favorites()
