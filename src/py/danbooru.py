@@ -65,7 +65,7 @@ def get_count(query):
 
 def get_suggestions(query):
     try:
-        response = json_request("tags", f"search[hide_empty]=yes&search[name_matches]={query}*&search[order]=count")
+        response = json_request("autocomplete", f"search[query]={query}&search[type]=tag_query&limit=10")
         if response == None:
             return []
         return response
