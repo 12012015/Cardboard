@@ -132,18 +132,14 @@ def filter_func(child, self):
         status = False
     return status
 
-def sort_func(child1, child2):
+def sort_func(children):
     s = SETTINGS.get_string("sort")
-    if s == "first-added":
-        return (child1.post["added"] > child2.post["added"]) - (child1.post["added"] < child2.post["added"])
-    if s == "last-added":
-        return (child1.post["added"] < child2.post["added"]) - (child1.post["added"] > child2.post["added"])
-    if s == "newest":
-        return (child1.post["id"] < child2.post["id"]) - (child1.post["id"] > child2.post["id"])
-    if s == "oldest":
-        return (child1.post["id"] > child2.post["id"]) - (child1.post["id"] < child2.post["id"])
+    if s in ["first-added", "last-added"]:
+        children.sort(key=lambda c: c.post["added"], reverse=s == "last-added")
+    if s in ["newest", "oldest"]:
+        children.sort(key=lambda c: c.post["id"], reverse=s == "newest")
     if s == "random":
-        return random.choice([-1, 0, 1])
+        random.shuffle(children)
 
-def searches_sort_func(child1, child2):
-    return (child1.post["id"] < child2.post["id"]) - (child1.post["id"] > child2.post["id"])
+def searches_sort_func(children):
+    children.sort(key=lambda c: c.post["id"], reverse=True)
