@@ -105,7 +105,8 @@ class Window(Adw.ApplicationWindow):
             for query in tabs:
                 page = new_page(self.TabView, query, skip=True)
             self.TabView.set_selected_page(page)
-        self.Stack.set_visible_child_name(SETTINGS.get_string("stack"))
+        if SETTINGS.get_string("stack") != "":
+            self.Stack.set_visible_child_name(SETTINGS.get_string("stack"))
         self.update_stack(skip=True)
 
     def get_pages(self, *_):
@@ -257,12 +258,11 @@ class Window(Adw.ApplicationWindow):
             def do_load():
                 masonrybox = MasonryBox(child_activate=activate, max_columns=4, lazy_load=SETTINGS.get_int("posts-per-page"), pairs_only=False, load_in_view=lambda c: c.load_favorite())
                 start = time.time()
-                masonrybox.children = [Post(json.load(open(os.path.join(jsons, post), "r"))) for post in posts]
-                print(len(masonrybox.children), "posts in", int(time.time() - start), "seconds")
-                GLib.idle_add(self.FavOverlay.set_child, masonrybox)
                 masonrybox.set_sort_func(sort_func)
                 masonrybox.set_filter_func(filter_func, self)
-                GLib.idle_add(masonrybox.order_children)
+                masonrybox.extend([Post(json.load(open(os.path.join(jsons, post), "r"))) for post in posts])
+                print(len(masonrybox.children), "posts in", int(time.time() - start), "seconds")
+                GLib.idle_add(self.FavOverlay.set_child, masonrybox)
                 self.set_loading(False)
                 return False
         if posts != []:
@@ -279,14 +279,15 @@ class Window(Adw.ApplicationWindow):
             GLib.idle_add(self.SearchOverlay.set_child, Adw.Spinner())
         def do_load():
             masonrybox = MasonryBox(child_activate=activate, lazy_load=SETTINGS.get_int("posts-per-page"), max_columns=4, pairs_only=False, load_in_view=lambda c: c.Overlay.get_child().load())
+            children = []
             for tag in searches:
                 data = get_catalog(tag)
                 for post in data:
-                    masonrybox.children.append(Post(post))
-            GLib.idle_add(self.SearchOverlay.set_child, masonrybox)
-            masonrybox.set_filter_func(filter_func, self)
+                    children.append(Post(post))
             masonrybox.set_sort_func(searches_sort_func)
-            GLib.idle_add(masonrybox.order_children)
+            masonrybox.set_filter_func(filter_func, self)
+            masonrybox.extend(children)
+            GLib.idle_add(self.SearchOverlay.set_child, masonrybox)
             self.set_loading(False)
             return False
         if SETTINGS.get_strv("saved-searches") != []:
@@ -300,7 +301,7 @@ class Window(Adw.ApplicationWindow):
         row = self.Suggestions.get_child().get_child().get_selected_row()
         if row != None and self.Suggestions.get_mapped() and SETTINGS.get_boolean("autocomplete"):
             self.hide_popovers()
-            query = row.get_child().get_first_child().get_label()
+            query = row.get_child().item["value"]
             if " " in self.Search.get_text():
                 query = f"{' '.join(self.Search.get_text().split()[:-1])} {query}"
             context = self.get_context()
@@ -351,19 +352,23 @@ class Window(Adw.ApplicationWindow):
             return
         if SETTINGS.get_boolean("autocomplete"):
             def do_load():
-                data = get_suggestions(text.rsplit(" ")[-1])
+                data = get_suggestions(text.split()[-1])
                 def do_show():
                     if data != []:
                         self.Suggestions.get_child().get_child().remove_all()
-                        for tag in data:
+                        if len(data) == 1 and data[0]["value"] == text:
+                            return self.hide_popovers()
+                        for item in data:
                             box = Gtk.Box(height_request=30, margin_start=6, margin_end=6, spacing=6)
-                            for index, text in enumerate([tag["name"], tag["post_count"]]):
-                                if index > 0:
-                                    text = f"({text})"
-                                label = Gtk.Label(label=text)
-                                if index > 0:
-                                    label.add_css_class("dimmed")
-                                box.append(label)
+                            tag_label = item["label"]
+                            if "antecedent" in item:
+                                tag_label = f"{item['antecedent']} → {item['label']}"
+                            box.append(Gtk.Label(label=tag_label))
+                            if "post_count" in item:
+                                count = Gtk.Label(label=f"({item['post_count']})")
+                                count.add_css_class("dimmed")
+                                box.append(count)
+                            box.item = item
                             self.Suggestions.get_child().get_child().append(box)
                         if not hasattr(self.Suggestions, "popover") or self.Suggestions.popover != popover:
                             self.Suggestions.popover = popover
@@ -375,7 +380,7 @@ class Window(Adw.ApplicationWindow):
                         self.hide_popovers()
                 GLib.idle_add(do_show)
             last_term = text.split()[-1] if text else []
-            if len(last_term) > 1 and hasattr(context, "text") and text and context.text != text and not text.endswith(" ") and not text.startswith(" "):
+            if hasattr(context, "text") and text and context.text != text and not text.endswith(" ") and not text.startswith(" "):
                 threading.Thread(target=do_load, daemon=True).start()
             else:
                 popover.set_visible(False)
