@@ -74,7 +74,7 @@ def load_page(page, query=False, history=True):
                         widget = MasonryBox(max_columns=4, child_activate=activate, pairs_only=False, load_in_view=lambda c: c.Overlay.get_child().load())
                         widget.set_filter_func(tab_filter_func)
                         widget.query = query
-                        widget.extend(Post(i) for i in data)
+                        widget.extend([Post(i) for i in data])
                         widget.get_child().connect("edge-reached", next_page)
                         if n == len(widget.children):
                             widget.end = True
@@ -84,7 +84,6 @@ def load_page(page, query=False, history=True):
                     GLib.idle_add(content.set_child, widget)
                     GLib.idle_add(content.get_root().set_loading, False)
                     GLib.idle_add(page.set_loading, False)
-                    GLib.idle_add(content.get_root().update_tab)
                 GLib.idle_add(do_show)
             return False
         threading.Thread(target=do_load, daemon=True).start()
@@ -142,10 +141,7 @@ def next_page(scrolledwindow, pos):
             else:
                 def do_add():
                     masonrybox.page = page
-                    children = []
-                    for i in data:
-                        children.append(Post(i))
-                    masonrybox.extend(children)
+                    masonrybox.extend([Post(i) for i in data])
                 GLib.idle_add(do_add)
             GLib.idle_add(masonrybox.get_root().set_loading, False)
             GLib.idle_add(_page.set_loading, False)
