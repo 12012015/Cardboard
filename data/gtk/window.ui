@@ -286,7 +286,6 @@
             <child>
               <object class="AdwTabBar">
                 <property name="view">TabView</property>
-                <property name="visible" bind-source="Overview" bind-property="visible" bind-flags="bidirectional">True</property>
               </object>
             </child>
           </object>
