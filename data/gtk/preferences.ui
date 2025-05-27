@@ -17,6 +17,13 @@
             <property name="title">App</property>
             <child>
               <object class="AdwSwitchRow">
+                <property name="name">hide-tabs</property>
+                <property name="title">Hide Tabs Bar</property>
+                <signal name="realize" handler="bind_setting"/>
+              </object>
+            </child>
+            <child>
+              <object class="AdwSwitchRow">
                 <property name="name">autocomplete</property>
                 <property name="title">Autocomplete Search</property>
                 <property name="tooltip-text">Queries will be sent to Danbooru</property>
