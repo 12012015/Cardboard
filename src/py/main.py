@@ -60,6 +60,7 @@ class Window(Adw.ApplicationWindow):
     Search = Gtk.Template.Child()
     Search_2  = Gtk.Template.Child()
     Overview = Gtk.Template.Child()
+    TopBar = Gtk.Template.Child()
     Menu = Gtk.Template.Child()
     DefaultMenu = Gtk.Template.Child()
     FavMenu = Gtk.Template.Child()
@@ -73,6 +74,7 @@ class Window(Adw.ApplicationWindow):
         self.closed_tabs = []
         self.restore = SETTINGS.get_boolean("restore-tabs")
         super().__init__(application=app)
+        self.TopBar.get_last_child().set_visible(not SETTINGS.get_boolean("hide-tabs"))
         for attribute in ["default-width", "default-height", "maximized"]:
             SETTINGS.bind(attribute, self, attribute, 0)
         action = self.get_application().create_action
@@ -91,6 +93,7 @@ class Window(Adw.ApplicationWindow):
         back.set_enabled(False)
         forward.set_enabled(False)
         SETTINGS.connect("changed::sort", lambda *_: self.FavOverlay.get_child().invalidate_sort() if hasattr(self.FavOverlay.get_child(), "invalidate_sort") else None)
+        SETTINGS.connect("changed::hide-tabs", self.hide_tab_bar)
         app.connect("shutdown", self.get_pages)
         if SETTINGS.get_boolean("restore-tabs"):
             try:
@@ -108,6 +111,10 @@ class Window(Adw.ApplicationWindow):
         if SETTINGS.get_string("stack") != "":
             self.Stack.set_visible_child_name(SETTINGS.get_string("stack"))
         self.update_stack(skip=True)
+
+    def hide_tab_bar(self, *_):
+        if self.Stack.get_page(self.Stack.get_visible_child()).get_title() == "Browse":
+            self.TopBar.get_last_child().set_visible(not SETTINGS.get_boolean("hide-tabs"))
 
     def get_pages(self, *_):
         pages = self.TabView.get_pages()
@@ -202,6 +209,8 @@ class Window(Adw.ApplicationWindow):
         text = ""
         if current == "Browse":
             self.Overview.set_visible(True)
+            if not SETTINGS.get_boolean("hide-tabs"):
+                self.TopBar.get_last_child().set_visible(True)
             self.Menu.set_menu_model(self.TabMenu)
             if hasattr(self.TabView.get_selected_page(), "text"):
                 text = self.TabView.get_selected_page().text
@@ -227,6 +236,7 @@ class Window(Adw.ApplicationWindow):
         self.Search_2.set_position(-1)
         if current != "Browse":
             self.Overview.set_visible(False)
+            self.TopBar.get_last_child().set_visible(False)
         if current != "Favorites":
             self.Add.set_visible(False)
     
