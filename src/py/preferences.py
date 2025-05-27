@@ -117,8 +117,10 @@ def filter_func(child, self):
     terms = self.Search.get_text().lower().split()
     valid_terms = [t for t in terms if not t.strip().startswith("-")]
     invalid_terms = [t.lstrip("-") for t in terms if t.strip().startswith("-")]
-    post = child.post
-    string = f"{post['tag_string']} {post['id']} rating:{post['rating']}".lower().split()
+    _post = child.post
+    if "media_asset" in _post:
+        del _post["media_asset"]
+    string = re.sub('[,"}{]', "", json.dumps(_post)).replace(": ", ":")
     status = False
     if not terms:
         status = True
@@ -126,9 +128,9 @@ def filter_func(child, self):
         status = True
     if any(t in item for t in invalid_terms) and invalid_terms:
         status = False
-    if any(tag in post["tag_string"].split() for tag in SETTINGS.get_strv("blacklist")):
+    if any(tag in child.post["tag_string"].split() for tag in SETTINGS.get_strv("blacklist")):
         status = False
-    if SETTINGS.get_boolean("safe-mode") and not post["rating"] == "g":
+    if SETTINGS.get_boolean("safe-mode") and not child.post["rating"] == "g":
         status = False
     return status
 
