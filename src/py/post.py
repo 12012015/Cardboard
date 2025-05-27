@@ -30,6 +30,7 @@ class Post(Adw.Bin):
     def __init__(self, post, catalog=True):
         self.post = post
         self.catalog = catalog
+        self.preview = False
         if catalog:
             media = MediaWidget(uri=get_thumbnail(post), load=False, limit=1000)
             super().__init__()
@@ -65,10 +66,17 @@ class Post(Adw.Bin):
         rating_map = {"g": "General", "s": "Sensitive", "q": "Questionable", "e": "Explicit"}
         rating = rating_map.get(post["rating"], "Unknown")
         status = "Pending" if post["is_pending"] else "Deleted" if post["is_deleted"] else "Active"
-        info = {"ID": post["id"], "Date": GLib.DateTime.new_from_iso8601(post["created_at"]).format("%c"),
-            "Size": f"{round(post['file_size'] / (1024 * 1024), 2)} MB {post['file_ext']} ({post['image_width']}x{post['image_height']})", "Source": GLib.Uri.escape_string(post["source"], ":/?=", True),
-            "Rating": rating, "Status": status}
-        for title, _info in info.items():
+        info = [
+            ("ID", post["id"]),
+            ("Date", GLib.DateTime.new_from_iso8601(post["created_at"]).to_local().format("%c")),
+            ("Size", f"{round(post['file_size'] / (1024 * 1024), 2)} MB {post['file_ext']} ({post['image_width']}x{post['image_height']})"),
+            ("Source", GLib.Uri.escape_string(post["source"], ":/?=", True)),
+            ("Rating", rating),
+            ("Status", status)
+        ]
+        if "added" in post:
+            info = [("Added", GLib.DateTime.new_from_unix_utc(post["added"]).to_local().format("%c"))] + info
+        for title, _info in info:
                 group = Adw.PreferencesGroup(halign=1)
                 group.add(Adw.ActionRow(activatable=False, title=title, subtitle=_info, halign=1))
                 page.add(group)
@@ -112,7 +120,7 @@ class Post(Adw.Bin):
 
     @Gtk.Template.Callback()
     def middle_click(self, *_):
-        if self.catalog:
+        if self.catalog or self.preview:
             self.get_root().new_tab(query=self.post, skip=True)
 
     @Gtk.Template.Callback()
@@ -196,6 +204,7 @@ def activate(listbox, row):
             return True
         GLib.timeout_add(100, check)
     post = Post(row.get_child().post, False)
+    post.preview = True
     dialog = Adw.Dialog(child=Adw.Spinner(height_request=360), follows_content_size=True, presentation_mode=2)
     check_widget_loaded(dialog, post)
     dialog.connect("notify::css-classes", center)
@@ -232,6 +241,6 @@ def favorite(button, post, skip=False):
     else:
         post["added"] = GLib.DateTime.new_now_utc().to_unix()
         with open(file, "w") as f:
-            json.dump(post, f, separators=(',', ':'))
+            json.dump(post, f, separators=(",", ":"))
     if not skip:
-        favorite_status(button, post['id'])
+        favorite_status(button, post["id"])
