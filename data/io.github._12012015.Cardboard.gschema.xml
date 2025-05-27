@@ -64,5 +64,8 @@
     <key name="restore" type="s">
       <default>""</default>
     </key>
+    <key name="hide-tabs" type="b">
+      <default>false</default>
+    </key>
  </schema>
 </schemalist>
