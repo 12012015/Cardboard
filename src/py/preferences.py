@@ -113,25 +113,35 @@ def tab_filter_func(child):
         return False
     return True
 
+def filter_term(terms, post):
+    status = []
+    tag_string = post["tag_string"].split()
+    for term in terms:
+        if ":" in term:
+            key, value = term.rsplit(":", 1)
+            if key in post:
+                if str(post[key]).lower() == value or (value == "*" or value == "" and not (post[key] == None or post[key] == False)):
+                    status.append(True)
+                else:
+                    status.append(False)
+            else:
+                status.append(False)
+        else:
+            status.append(term in tag_string)
+    return all(status)
+
 def filter_func(child, self):
-    terms = self.Search.get_text().lower().split()
-    valid_terms = [t for t in terms if not t.strip().startswith("-")]
-    invalid_terms = [t.lstrip("-") for t in terms if t.strip().startswith("-")]
-    _post = child.post
-    if "media_asset" in _post:
-        del _post["media_asset"]
-    string = re.sub('[,"}{]', "", json.dumps(_post)).replace(": ", ":")
-    status = False
-    if not terms:
-        status = True
-    if all(t in string for t in valid_terms):
-        status = True
-    if any(t in item for t in invalid_terms) and invalid_terms:
-        status = False
-    if any(tag in child.post["tag_string"].split() for tag in SETTINGS.get_strv("blacklist")):
-        status = False
+    valid_terms = [t for t in self.Search.get_text().lower().split() if not t.strip().startswith("-")]
+    invalid_terms = [t.lstrip("-") for t in self.Search.get_text().lower().split() if t.strip().startswith("-")]
+    invalid_terms.extend(SETTINGS.get_strv("blacklist"))
     if SETTINGS.get_boolean("safe-mode") and not child.post["rating"] == "g":
-        status = False
+        return False
+    status = False if valid_terms else True
+    if valid_terms:
+        status = filter_term(valid_terms, child.post)
+    if invalid_terms:
+        if status:
+            status = not filter_term(invalid_terms, child.post)
     return status
 
 def sort_func(children):
