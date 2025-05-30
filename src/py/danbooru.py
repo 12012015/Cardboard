@@ -19,7 +19,7 @@ def json_request(request, params=False):
         session.set_user_agent("cardboard")
         uri = f"https://danbooru.donmai.us/{request}.json"
         if params:
-            uri += f"?{params}"
+            uri += f"?{params}".replace(" ", "+")
         message = Soup.Message(method="GET",  uri=GLib.Uri.parse(uri, 0))
         result = session.send_and_read(message)
         if message.get_status() == 200:
